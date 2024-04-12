@@ -132,8 +132,8 @@
                     v-model="bro_func_value"
                     placeholder="请选择操作类型"
                     style="width: 240px"
-                    @change="getSelectedBroFunc"
                     clearable
+                    @change="getSelectedBroFunc(bro_func_value)"
                     filterable
                     size="large"
                     :max-collapse-tags="3"
@@ -173,7 +173,8 @@
             </el-form-item>
           </el-form>
           <el-table :data="tableData" style="width: 100%" :loading="loading" stripe max-height="700px"
-                    @selection-change="handleSelectionChange" size="large">
+                    @selection-change="handleSelectionChange" size="large"
+          >
             <el-table-column type="selection" width="50px" label="多选">
             </el-table-column>
             <el-table-column prop="index" label="编号" width="60px"></el-table-column>
@@ -278,6 +279,7 @@ interface DialogTag {
   type: string;
 }
 
+
 const formInline = reactive({
   user: '',
   region: '',
@@ -296,6 +298,7 @@ for (let i = 1; i <= 16; i++) {
 const value2 = ref<string[]>([]);
 const value3 = ref<string[]>([]);
 const bro_func_value = ref<string>('');
+const bro_func_name = ref<string>('');
 
 const sendTagList = ref<string[]>([]); // 初始化为空数组
 const sendNoTagList = ref<string[]>([]); // 初始化为空数组
@@ -398,17 +401,24 @@ const executeBroFunc = async () => {
     const sendBroList = selectedBrowserIds.value.toString().split(",");
     const send_func_value = bro_func_value.value;
     const send_maxProcesses = maxProcesses.value;
+    const send_func_name = bro_func_name.value;
     const response = await $local.post('/execution_method', {
       data: {
         send_func_value,
         sendBroList,
         send_maxProcesses,
+        send_func_name
       },
       headers: {
         'Content-Type': 'application/json',
       },
     }); // 使用全局配置的 axios); // 使用全局配置的 axios
     console.log(response.data);
+    if (response.data.statu_code === 'success') {
+      setTimeout(() =>
+          fetchData(currentPage.value, pageSize.value, [], sendNoTagList.value), 1000
+      )
+    }
     ElMessage({
       message: response.data.msg,
       type: response.data.statu_code
@@ -516,10 +526,22 @@ const onSubmitEditTags = async () => {
   console.log(dialogVisible.value);
 };
 
-const getSelectedBroFunc = () => {
+function getSelectedBroFunc(newVal: string) {
   // 获取选中的操作
-  console.log(bro_func_value.value);
-};
+  console.log(newVal);
+  let selectedOption;
+  for (const option of operate_options.value) {
+    if (option.options) {
+      selectedOption = option.options.find(item => item.value === newVal);
+      if (selectedOption) {
+        break;
+      }
+    }
+  }
+  bro_func_name.value = selectedOption ? selectedOption.label : '';
+  // console.log(selectedOption);
+  console.log(bro_func_name.value);
+}
 
 const getSelectedTags = () => {
   // 获取选中的标签
