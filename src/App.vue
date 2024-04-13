@@ -22,7 +22,6 @@
                     multiple
                     placeholder="Select"
                     style="width: 100%; height: 100%"
-                    clearable
                     size="large"
                     @change="getSelectedTagsEdit"
                     :max-collapse-tags="10"
@@ -67,7 +66,7 @@
                     v-model="value2"
                     multiple
                     placeholder="请选择标签"
-                    style="width: 240px"
+                    style="width: 200px"
                     clearable
                     size="large"
                     tag-type="success"
@@ -100,7 +99,7 @@
                     multiple
                     placeholder="请选择标签"
                     tag-type="danger"
-                    style="width: 240px"
+                    style="width: 200px"
                     clearable
                     size="large"
                     @change="getSelectedNoTags"
@@ -123,6 +122,38 @@
               </div>
             </el-form-item>
             <el-form-item>
+              <div class="m-4">
+                <div class="edit-tags-title">
+                  &nbsp;
+                </div>
+                <el-select
+                    v-model="status_value"
+                    multiple
+                    placeholder="状态"
+                    tag-type="success"
+                    style="width: 160px"
+                    size="large"
+                    @change="getSelectedStatus"
+                    :max-collapse-tags="3"
+                    dropdown-menu-align="center"
+                >
+                  <el-option
+                      v-for="item in status_options"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                  >
+                    <div class="flex items-center">
+                      <el-tag :type="item.type" :key="item.value" style="margin-right: 8px" size="small">
+                        {{ item.label }}
+                      </el-tag>
+                    </div>
+                  </el-option>
+                </el-select>
+              </div>
+            </el-form-item>
+
+            <el-form-item>
               <el-button type="primary" @click="onSubmit" size="large">查找</el-button>
             </el-form-item>
 
@@ -131,7 +162,7 @@
                 <el-select
                     v-model="bro_func_value"
                     placeholder="请选择操作类型"
-                    style="width: 240px"
+                    style="width: 180px"
                     clearable
                     @change="getSelectedBroFunc(bro_func_value)"
                     filterable
@@ -154,7 +185,7 @@
                 <el-select
                     v-model="maxProcesses"
                     placeholder="线程数"
-                    style="width: 80px"
+                    style="width: 75px"
                     size="large"
                     filterable
                     :max-collapse-tags="3"
@@ -279,6 +310,33 @@ interface DialogTag {
   type: string;
 }
 
+const status_options = [
+  {
+    value: 'idle',
+    label: '空闲',
+    type: 'info',
+  },
+  {
+    value: 'running',
+    label: '进行中',
+    type: 'warning',
+  },
+  {
+    value: 'wait',
+    label: '等待中',
+    type: 'primary',
+  },
+  {
+    value: 'success',
+    label: '已完成',
+    type: 'success',
+  },
+  {
+    value: 'error',
+    label: '意外中断',
+    type: 'danger',
+  },
+]
 
 const formInline = reactive({
   user: '',
@@ -295,6 +353,7 @@ for (let i = 1; i <= 16; i++) {
   });
 }
 
+const status_value = ref<string[]>([]);
 const value2 = ref<string[]>([]);
 const value3 = ref<string[]>([]);
 const bro_func_value = ref<string>('');
@@ -325,12 +384,15 @@ const fetchData = async (pageNum: number, pageSize: number, sendTagList: string[
   // 独立的异步函数
   try {
     loading.value = true;
+
+    const sendStatusList :list = status_value.value
     const response = await $http.post('/get_browserList', {
       data: {
         pageNum,
         pageSize,
         sendTagList,
         sendNoTagList,
+        sendStatusList,
       },
       headers: {
         'Content-Type': 'application/json',
@@ -416,7 +478,7 @@ const executeBroFunc = async () => {
     console.log(response.data);
     if (response.data.statu_code === 'success') {
       setTimeout(() =>
-          fetchData(currentPage.value, pageSize.value, [], sendNoTagList.value), 1000
+          onSubmit(), 1000
       )
     }
     ElMessage({
@@ -499,6 +561,8 @@ const onSubmitEditTags = async () => {
     loading.value = true;
     const send_browser_id = currentBrowserName.value;
     const send_tags = editedTagsTest.value;
+    // 关闭弹窗
+    dialogVisible.value = false;
     const response = await $http.post('/edit_tags', {
       data: {
         send_browser_id,
@@ -520,9 +584,6 @@ const onSubmitEditTags = async () => {
     })
     // 处理错误，例如显示错误信息给用户
   }
-
-  // 关闭弹窗
-  dialogVisible.value = false;
   console.log(dialogVisible.value);
 };
 
@@ -556,6 +617,10 @@ const getSelectedNoTags = () => {
   console.log(value2.value);
   console.log(sendTagList.value);
 };
+
+const getSelectedStatus = () =>{
+  console.log(status_value.value)
+}
 
 const getSelectedTagsEdit = () => {
   // 获取选中的标签
