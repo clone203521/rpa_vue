@@ -3,6 +3,7 @@ import axios from 'axios' // 引入axios
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router' // 引入 router 模块
+import { createPinia } from 'pinia'
 
 const app = createApp(App)
 
@@ -26,7 +27,7 @@ app.provide('$local', axiosInstance2)
 // 使用Element Plus
 app.use(ElementPlus, {size: 'small', zIndex: 3000})
 //使用router路由
-app.use(router)
+app.use(router).use(createPinia())
 
 // 挂载Vue应用程序
 app.mount('#app')
